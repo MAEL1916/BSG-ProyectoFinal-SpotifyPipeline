@@ -8,7 +8,40 @@
 
 ---
 
-##  Resumen del Proyecto
+## Video Demostrativo
+
+**Link del video:** [Insertar URL aquí]
+
+> Demostración completa del funcionamiento del pipeline, ejecución en vivo y explicación de la arquitectura.
+
+---
+
+## Tabla de Contenidos
+
+1. [Resumen del Proyecto](#resumen-del-proyecto)
+2. [Arquitectura](#arquitectura)
+   - [Diagrama Lógico del Pipeline](#diagrama-lógico-del-pipeline)
+   - [Mapeo a Servicios Azure](#mapeo-a-servicios-azure)
+3. [Cómo Ejecutar Localmente](#cómo-ejecutar-localmente)
+4. [Cómo Ejecutar en Azure](#cómo-ejecutar-en-azure)
+5. [Estructura de Datos (Medallion Architecture)](#estructura-de-datos-medallion-architecture)
+   - [Bronze Layer (Raw Zone)](#bronze-layer-raw-zone)
+   - [Silver Layer (Curated Zone)](#silver-layer-curated-zone)
+   - [Gold Layer (Serving Zone)](#gold-layer-serving-zone)
+6. [Decisiones Técnicas Clave](#decisiones-técnicas-clave)
+7. [Costos Estimados (Azure)](#costos-estimados-azure)
+8. [Seguridad](#seguridad)
+9. [Tests](#tests)
+10. [Estructura del Proyecto](#estructura-del-proyecto)
+11. [CI/CD](#cicd)
+12. [Documentación Adicional](#documentación-adicional)
+13. [Contribuir](#contribuir)
+14. [Contacto](#contacto)
+15. [Licencia](#licencia)
+
+---
+
+## Resumen del Proyecto
 
 Pipeline de ingeniería de datos end-to-end que integra datos de música desde múltiples fuentes heterogéneas (CSV histórico + API REST en tiempo real), los procesa mediante transformaciones ETL siguiendo la arquitectura Medallion (Bronze → Silver → Gold), y almacena los resultados en Azure Data Lake Storage Gen2 en formato Parquet particionado, listos para análisis con Azure Synapse Analytics.
 
@@ -16,7 +49,7 @@ Pipeline de ingeniería de datos end-to-end que integra datos de música desde m
 
 ---
 
-##  Arquitectura
+## Arquitectura
 
 ### Diagrama Lógico del Pipeline
 
@@ -51,7 +84,7 @@ Ver documentación completa en: [architecture/architecture.md](architecture/arch
 
 ---
 
-##  Cómo Ejecutar Localmente
+## Cómo Ejecutar Localmente
 
 ### 1. Prerrequisitos
 
@@ -133,7 +166,7 @@ INFO - Pipeline ejecutado correctamente
 
 ---
 
-##  Cómo Ejecutar en Azure
+## Cómo Ejecutar en Azure
 
 ### Opción 1: Azure Data Factory (Recomendado para producción)
 
@@ -188,7 +221,7 @@ Ver guía completa: [docs/SETUP.md](docs/SETUP.md)
 
 ---
 
-##  Estructura de Datos (Medallion Architecture)
+## Estructura de Datos (Medallion Architecture)
 
 ### Bronze Layer (Raw Zone)
 
@@ -219,10 +252,10 @@ Ver guía completa: [docs/SETUP.md](docs/SETUP.md)
 **Ubicación:** `silver/spotify/event_date=YYYY-MM-DD/datos.parquet`
 
 **Transformaciones aplicadas:**
--  Eliminación de nulos en `nombre_artista`
--  Deduplicación por `(id_artista, cancion)`
--  Validación de esquema con JSON Schema
--  Agregar `fecha_procesamiento`
+- Eliminación de nulos en `nombre_artista`
+- Deduplicación por `(id_artista, cancion)`
+- Validación de esquema con JSON Schema
+- Agregar `fecha_procesamiento`
 
 **Registros típicos:** ~1500-1900 (pérdida <5%)
 
@@ -255,7 +288,7 @@ Ver contratos de datos: [data_contracts/schemas/](data_contracts/schemas/)
 
 ---
 
-##  Decisiones Técnicas Clave
+## Decisiones Técnicas Clave
 
 ### 1. Azure como proveedor cloud
 
@@ -293,7 +326,7 @@ Ver contratos de datos: [data_contracts/schemas/](data_contracts/schemas/)
 
 ---
 
-##  Costos Estimados (Azure)
+## Costos Estimados (Azure)
 
 ### Ejecución diaria (30 días)
 
@@ -315,41 +348,36 @@ Ver contratos de datos: [data_contracts/schemas/](data_contracts/schemas/)
 
 ### Optimizaciones de costo:
 
--  Usar tier "Cool" para datos Bronze antiguos (>30 días)
--  Comprimir con Parquet (ahorro 80-90% vs CSV)
--  Particionamiento por fecha (consultas más eficientes)
--  Lifecycle management (borrar Bronze >90 días)
+- Usar tier "Cool" para datos Bronze antiguos (>30 días)
+- Comprimir con Parquet (ahorro 80-90% vs CSV)
+- Particionamiento por fecha (consultas más eficientes)
+- Lifecycle management (borrar Bronze >90 días)
 
 ---
 
-##  Seguridad
+## Seguridad
 
 ### Manejo de Credenciales
 
- **Variables de entorno:** Todas las credenciales en `.env`
-
- **Gitignore:** `.env` excluido del repositorio
-
- **Rotación:** Cambiar claves de Azure cada 90 días
+- **Variables de entorno:** Todas las credenciales en `.env` (nunca en código)
+- **Gitignore:** `.env` excluido del repositorio
+- **Rotación:** Cambiar claves de Azure cada 90 días (recomendado)
 
 ### Acceso a Datos
 
- **RBAC:** Role-Based Access Control en Azure
-
-- Pipeline: `Storage Blob Data Contributor`
-- Analistas: `Storage Blob Data Reader` (solo lectura)
-
- **Network:** Restringir acceso a Storage Account por IP (opcional)
+- **RBAC:** Role-Based Access Control en Azure
+  - Pipeline: `Storage Blob Data Contributor`
+  - Analistas: `Storage Blob Data Reader` (solo lectura)
+- **Network:** Restringir acceso a Storage Account por IP (opcional)
 
 ### Datos Sensibles
 
- **Sin PII:** No se procesan datos personales (solo artistas públicos)
-
- **Encriptación:** Datos en tránsito (HTTPS) y reposo (Azure default encryption)
+- **Sin PII:** No se procesan datos personales (solo artistas públicos)
+- **Encriptación:** Datos en tránsito (HTTPS) y reposo (Azure default encryption)
 
 ---
 
-##  Tests
+## Tests
 
 ### Ejecutar todos los tests
 
@@ -365,8 +393,8 @@ pytest tests/ -v
 
 ### Tests implementados
 
--  `test_crear_bronze()`: Valida integración CSV + API
--  `test_limpiar_datos()`: Valida deduplicación y limpieza
+- `test_crear_bronze()`: Valida integración CSV + API
+- `test_limpiar_datos()`: Valida deduplicación y limpieza
 
 ### Coverage
 
@@ -379,7 +407,7 @@ open htmlcov/index.html
 
 ---
 
-##  Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 Proyecto Final Elias Martinez BSG Data Engineer/
@@ -417,7 +445,7 @@ Proyecto Final Elias Martinez BSG Data Engineer/
 
 ---
 
-##  CI/CD
+## CI/CD
 
 Pipeline de GitHub Actions configurado en `.github/workflows/ci.yml`
 
@@ -426,17 +454,17 @@ Pipeline de GitHub Actions configurado en `.github/workflows/ci.yml`
 - Pull Requests a `main`
 
 **Pasos:**
-1.  Instalar dependencias
-2.  Lint (validar sintaxis Python)
-3.  Ejecutar tests con coverage
-4.  Validar JSON schemas
-5.  Verificar imports
+1. Instalar dependencias
+2. Lint (validar sintaxis Python)
+3. Ejecutar tests con coverage
+4. Validar JSON schemas
+5. Verificar imports
 
 **Badge:** (Agregar después de primer push)
 
 ---
 
-##  Documentación Adicional
+## Documentación Adicional
 
 - **Arquitectura detallada:** [architecture/architecture.md](architecture/architecture.md)
 - **Manual operativo:** [docs/RUNBOOK.md](docs/RUNBOOK.md)
@@ -444,7 +472,7 @@ Pipeline de GitHub Actions configurado en `.github/workflows/ci.yml`
 
 ---
 
-##  Contribuir
+## Contribuir
 
 ```bash
 # 1. Crear rama
@@ -459,6 +487,15 @@ git push origin feature/nueva-funcionalidad
 ```
 
 **Convención de commits:** [Conventional Commits](https://www.conventionalcommits.org/)
+
+---
+
+## Contacto
+
+**Autor:** Elias Martinez  
+**Email:** [tu-email@example.com]  
+**LinkedIn:** [tu-perfil-linkedin]  
+**GitHub:** [MAEL1916](https://github.com/MAEL1916)
 
 ---
 
