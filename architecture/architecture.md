@@ -235,10 +235,10 @@ validar_datos(df, capa='bronze|silver|gold')
 **Decisión:** Usar Deezer API pública (sin auth).
 
 **Consecuencias:**
-- ✅ Más simple de implementar
-- ✅ Sin límites de rate estrictos
-- ❌ Menos datos disponibles (sin géneros detallados)
-- ❌ Menor precisión en popularidad
+-  Más simple de implementar
+-  Sin límites de rate estrictos
+-  Menos datos disponibles (sin géneros detallados)
+-  Menor precisión en popularidad
 
 ### 6.2 ¿Por qué Parquet en vez de CSV?
 
@@ -247,10 +247,10 @@ validar_datos(df, capa='bronze|silver|gold')
 **Decisión:** Apache Parquet para todas las capas.
 
 **Consecuencias:**
-- ✅ Compresión ~10x mejor que CSV
-- ✅ Lectura columnar eficiente
-- ✅ Compatible con Synapse/Databricks
-- ❌ No legible por humanos (requiere herramientas)
+-  Compresión ~10x mejor que CSV
+- Lectura columnar eficiente
+- Compatible con Synapse/Databricks
+-  No legible por humanos (requiere herramientas)
 
 ### 6.3 ¿Por qué Azure Data Lake Gen2?
 
@@ -259,10 +259,10 @@ validar_datos(df, capa='bronze|silver|gold')
 **Decisión:** ADLS Gen2 como storage principal.
 
 **Consecuencias:**
-- ✅ Integración nativa con Synapse
-- ✅ Particionamiento Hive-style
-- ✅ Control de acceso granular (RBAC)
-- ❌ Vendor lock-in con Azure
+-  Integración nativa con Synapse
+-  Particionamiento Hive-style
+-  Control de acceso granular (RBAC)
+-  Vendor lock-in con Azure
 
 ---
 

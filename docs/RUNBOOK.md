@@ -1,18 +1,17 @@
 # RUNBOOK - Pipeline Spotify Analytics
 
-## 📋 Información General
+##  Información General
 
 **Pipeline:** Spotify Analytics ETL  
 **Proveedor Cloud:** Microsoft Azure  
-**Frecuencia de ejecución:** Manual (futuro: diario)  
-**Tiempo estimado:** 2-5 minutos  
+**Frecuencia de ejecución:** Manual
 **Owner:** Elias Martinez
 
 ---
 
-## 🚀 Ejecución Normal
+##  Ejecución Normal
 
-### Opción 1: Usar Makefile (Recomendado)
+### Opción 1: Usar Makefile
 
 ```bash
 # Activar entorno y ejecutar
@@ -56,7 +55,7 @@ python src/main.py
 
 ---
 
-## 🔄 Re-ejecución del Pipeline
+##  Re-ejecución del Pipeline
 
 ### Escenario 1: Ejecución completa desde cero
 
@@ -78,7 +77,7 @@ make run
 
 ---
 
-## 📅 Backfill (Carga Histórica)
+##  Backfill (Carga Histórica)
 
 ### ¿Qué es un backfill?
 
@@ -118,7 +117,7 @@ python src/main.py --backfill-date 2026-04-10
 
 ---
 
-## ❌ Troubleshooting - Qué Revisar Si Falla
+##  Troubleshooting - Qué Revisar Si Falla
 
 ### Error 1: "Error al descargar CSV"
 
@@ -285,7 +284,7 @@ python src/main.py 2>&1 | tee pipeline.log
 
 ---
 
-## 📊 Logs - Dónde Mirar
+##  Logs - Dónde Mirar
 
 ### Logs en tiempo real
 
@@ -319,7 +318,7 @@ AzureDiagnostics
 
 ---
 
-## 🔍 Validación Post-Ejecución
+##  Validación Post-Ejecución
 
 ### 1. Verificar que los archivos se crearon en Azure
 
@@ -375,7 +374,7 @@ print(f"Total artistas: {len(df)}")
 
 ---
 
-## 🔔 Alertas Recomendadas (futuro)
+##  Alertas Recomendadas (futuro)
 
 | Condición | Severidad | Acción |
 |-----------|-----------|--------|
@@ -386,32 +385,7 @@ print(f"Total artistas: {len(df)}")
 | Gold = 0 artistas | Crítica | Detener siguiente ejecución |
 
 ---
-
-## 📞 Contactos
-
-| Rol | Nombre | Contacto |
-|-----|--------|----------|
-| Owner | Elias Martinez | elias@example.com |
-| Azure Admin | [TBD] | azure-admin@example.com |
-| On-call | [TBD] | oncall@example.com |
-
----
-
-## 📝 Checklist de Ejecución
-
-Antes de ejecutar en producción:
-
-- [ ] Variables de entorno configuradas (`.env` completo)
-- [ ] Credenciales de Azure válidas (Blob + ADLS)
-- [ ] Container de ADLS existe
-- [ ] CSV disponible en Blob Storage
-- [ ] Tests pasando (`make test`)
-- [ ] Conexión a internet estable
-- [ ] Espacio en ADLS suficiente (>1GB libre)
-
----
-
-## 🚨 Rollback (Revertir Ejecución)
+##  Rollback (Revertir Ejecución)
 
 Si una ejecución generó datos incorrectos:
 
@@ -439,7 +413,7 @@ make run
 
 ---
 
-## 📈 Monitoreo de Métricas
+##  Monitoreo de Métricas
 
 ### KPIs del Pipeline
 

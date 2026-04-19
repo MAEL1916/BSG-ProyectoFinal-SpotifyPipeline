@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 def main():
-    logging.info("=== INICIANDO PIPELINE DE SPOTIFY ===")
+    logging.info("Iniciando APi Spotify")
     
     logging.info("--- PASO 1: EXTRACCIÓN ---")
     
@@ -21,8 +21,8 @@ def main():
     
     spotify_api = llamar_api()
     if spotify_api is None:
-        logging.warning('⚠️ API no disponible')
-        logging.info('✅ Continuando solo con CSV')
+        logging.warning(' API no disponible')
+        logging.info(' Continuando solo con CSV')
         spotify_api = None
     
     logging.info("--- PASO 2: TRANSFORMACIÓN BRONZE ---")
@@ -72,9 +72,9 @@ def main():
     logging.info("=== PIPELINE COMPLETADO EXITOSAMENTE ===")
     
     # Resumen de registros procesados
-    logging.info(f"📊 Bronze: {len(datos_bronze)} registros")
-    logging.info(f"📊 Silver: {len(datos_silver)} registros")
-    logging.info(f"���� Gold: {len(datos_gold)} artistas")
+    logging.info(f"Bronze: {len(datos_bronze)} registros")
+    logging.info(f"Silver: {len(datos_silver)} registros")
+    logging.info(f"Gold: {len(datos_gold)} artistas")
     
     return True
 
