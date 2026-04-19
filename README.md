@@ -10,9 +10,9 @@
 
 ## Video Demostrativo
 
-**Link del video:** [Insertar URL aquí]
+**Link del video:** 
 
-> Demostración completa del funcionamiento del pipeline, ejecución en vivo y explicación de la arquitectura.
+> Video de youtube explicativo
 
 ---
 
@@ -487,15 +487,6 @@ git push origin feature/nueva-funcionalidad
 ```
 
 **Convención de commits:** [Conventional Commits](https://www.conventionalcommits.org/)
-
----
-
-## Contacto
-
-**Autor:** Elias Martinez  
-**Email:** [tu-email@example.com]  
-**LinkedIn:** [tu-perfil-linkedin]  
-**GitHub:** [MAEL1916](https://github.com/MAEL1916)
 
 ---
 
