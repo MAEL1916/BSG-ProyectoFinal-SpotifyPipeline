@@ -1,0 +1,47 @@
+{
+  "layer": "silver",
+  "description": "Datos limpios de Spotify sin duplicados",
+  "fields": [
+    {
+      "name": "nombre_artista",
+      "type": "string",
+      "nullable": false,
+      "description": "Nombre del artista limpio"
+    },
+    {
+      "name": "id_artista",
+      "type": "string",
+      "nullable": false,
+      "description": "ID único de Spotify"
+    },
+    {
+      "name": "cancion",
+      "type": "string",
+      "nullable": false,
+      "description": "Nombre de la canción"
+    },
+    {
+      "name": "popularidad",
+      "type": "integer",
+      "nullable": false,
+      "description": "Score de popularidad validado (0-100)"
+    },
+    {
+      "name": "fuente",
+      "type": "string",
+      "nullable": false,
+      "description": "Origen del dato"
+    },
+    {
+      "name": "fecha_procesamiento",
+      "type": "timestamp",
+      "nullable": false,
+      "description": "Timestamp de procesamiento"
+    }
+  ],
+  "validations": {
+    "min_records": 1,
+    "no_duplicates": ["id_artista", "cancion"],
+    "max_null_percentage": 0
+  }
+}

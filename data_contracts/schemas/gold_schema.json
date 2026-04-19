@@ -1,0 +1,46 @@
+{
+  "layer": "gold",
+  "description": "Métricas agregadas por artista para analytics",
+  "fields": [
+    {
+      "name": "nombre_artista",
+      "type": "string",
+      "nullable": false,
+      "description": "Nombre del artista"
+    },
+    {
+      "name": "id_artista",
+      "type": "string",
+      "nullable": false,
+      "description": "ID único de Spotify"
+    },
+    {
+      "name": "total_canciones",
+      "type": "integer",
+      "nullable": false,
+      "description": "Cantidad de canciones del artista"
+    },
+    {
+      "name": "popularidad_promedio",
+      "type": "float",
+      "nullable": false,
+      "description": "Promedio de popularidad"
+    },
+    {
+      "name": "popularidad_maxima",
+      "type": "integer",
+      "nullable": false,
+      "description": "Popularidad más alta"
+    },
+    {
+      "name": "fuente_datos",
+      "type": "string",
+      "nullable": false,
+      "description": "De dónde vienen los datos"
+    }
+  ],
+  "validations": {
+    "min_records": 1,
+    "no_duplicates": ["id_artista"]
+  }
+}

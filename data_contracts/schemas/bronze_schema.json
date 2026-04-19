@@ -1,0 +1,40 @@
+{
+  "layer": "bronze",
+  "description": "Datos crudos de Spotify (CSV + API)",
+  "fields": [
+    {
+      "name": "nombre_artista",
+      "type": "string",
+      "nullable": false,
+      "description": "Nombre del artista"
+    },
+    {
+      "name": "id_artista",
+      "type": "string",
+      "nullable": true,
+      "description": "ID de Spotify del artista"
+    },
+    {
+      "name": "cancion",
+      "type": "string",
+      "nullable": true,
+      "description": "Nombre de la canción"
+    },
+    {
+      "name": "popularidad",
+      "type": "integer",
+      "nullable": true,
+      "description": "Score de popularidad (0-100)"
+    },
+    {
+      "name": "fuente",
+      "type": "string",
+      "nullable": false,
+      "description": "Origen del dato: CSV o API"
+    }
+  ],
+  "validations": {
+    "min_records": 1,
+    "max_null_percentage": 30
+  }
+}
