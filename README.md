@@ -3,14 +3,12 @@
 **Autor:** Elias Martinez  
 **Curso:** Proyectos reales de Ingeniería de Datos con Python  
 **Institución:** BSG Institute  
-**Proveedor Cloud:** Microsoft Azure  
+**Cloud:** Azure  
 **Fecha:** Abril 2026
 
 ---
 
-## Video Demostrativo
-
-**Link del video:** 
+## Video
 
 > Video de youtube explicativo
 
@@ -43,9 +41,9 @@
 
 ## Resumen del Proyecto
 
-Pipeline de ingeniería de datos end-to-end que integra datos de música desde múltiples fuentes heterogéneas (CSV histórico + API REST en tiempo real), los procesa mediante transformaciones ETL siguiendo la arquitectura Medallion (Bronze → Silver → Gold), y almacena los resultados en Azure Data Lake Storage Gen2 en formato Parquet particionado, listos para análisis con Azure Synapse Analytics.
+Pipeline ETL que junta datos de Spotify Wrapped (CSV en Azure Blob) con datos actualizados de Deezer API. Usa arquitectura Medallion (Bronze/Silver/Gold) y guarda todo en Azure Data Lake como Parquet.
 
-**Problema resuelto:** Consolidar datos de artistas y canciones de Spotify Wrapped (CSV) con información actualizada de Deezer API para generar métricas de popularidad y rendimiento por artista, permitiendo análisis de tendencias musicales.
+**Qué hace:** Analiza popularidad de artistas y canciones, limpia duplicados, y genera métricas agregadas listas para dashboards.
 
 ---
 
@@ -288,92 +286,48 @@ Ver contratos de datos: [data_contracts/schemas/](data_contracts/schemas/)
 
 ---
 
-## Decisiones Técnicas Clave
+## Decisiones Técnicas
 
-### 1. Azure como proveedor cloud
+### Por qué Azure
 
-**Justificación:** Compatibilidad con entorno laboral existente y familiaridad con servicios Azure.
+Ya conocía Azure del trabajo/curso anterior, entonces fue más fácil.
 
-**Alternativas consideradas:** AWS (S3 + Glue), GCP (GCS + Dataflow)
+### Por qué Deezer en vez de Spotify
 
-### 2. Deezer API en vez de Spotify API
+Spotify API necesita OAuth que es complicado. Deezer es pública y gratis.
 
-**Justificación:** Spotify API requiere OAuth complejo. Deezer ofrece API pública sin autenticación.
+### Por qué Parquet
 
-**Trade-off:** Menos datos disponibles (sin géneros detallados), pero mayor simplicidad.
+Comprime mejor que CSV (~10x) y es más rápido de leer. Compatible con Synapse/Databricks.
 
-### 3. Apache Parquet para almacenamiento
+### Por qué Medallion (Bronze/Silver/Gold)
 
-**Justificación:** 
-- Compresión ~10x mejor que CSV
-- Lectura columnar eficiente
-- Compatible con Synapse/Databricks
+Es el estándar. Si algo sale mal en Silver, siempre puedo reprocesar desde Bronze.
 
-**Trade-off:** No legible por humanos (requiere herramientas).
+### Por qué validar con JSON Schema
 
-### 4. Arquitectura Medallion (Bronze/Silver/Gold)
-
-**Justificación:** Estándar de la industria para Data Lakes. Permite:
-- Trazabilidad (datos raw siempre disponibles)
-- Reprocessamiento (si Silver falla, Bronze sigue intacto)
-- Separación de responsabilidades
-
-### 5. Validación con JSON Schema
-
-**Justificación:** Detectar cambios en esquemas de fuentes antes de romper el pipeline.
-
-**Beneficio:** Fallos rápidos con mensajes claros.
+Si el CSV cambia de formato, me entero antes de que explote todo.
 
 ---
 
-## Costos Estimados (Azure)
+## Costos (Azure)
 
-### Ejecución diaria (30 días)
+Para desarrollo, cuesta ~$3 USD/mes:
+- Blob Storage: $0.02
+- Data Lake: $0.10
+- Data Factory: $1.50
+- Otros: $1.38
 
-| Servicio | Uso mensual | Costo USD/mes |
-|----------|-------------|---------------|
-| **Azure Blob Storage** | 1 GB almacenado | $0.02 |
-| **Azure Data Lake Gen2** | 5 GB almacenado | $0.10 |
-| **Transferencia de datos** | 10 GB salida | $0.87 |
-| **Deezer API** | Gratis (pública) | $0.00 |
-| **Azure Data Factory** | 30 ejecuciones | $1.50 |
-| **Azure Monitor** | Logs básicos | $0.50 |
-| **TOTAL** | | **~$3.00/mes** |
-
-**Nota:** Costos estimados para ambiente de desarrollo. Producción puede variar según:
-- Volumen de datos
-- Retención de históricos
-- Frecuencia de ejecución
-- Uso de Synapse Analytics ($5-10 DWU/hora)
-
-### Optimizaciones de costo:
-
-- Usar tier "Cool" para datos Bronze antiguos (>30 días)
-- Comprimir con Parquet (ahorro 80-90% vs CSV)
-- Particionamiento por fecha (consultas más eficientes)
-- Lifecycle management (borrar Bronze >90 días)
+**Nota:** Producción costaría más si usas Synapse ($5-10/hora).
 
 ---
 
 ## Seguridad
 
-### Manejo de Credenciales
-
-- **Variables de entorno:** Todas las credenciales en `.env` (nunca en código)
-- **Gitignore:** `.env` excluido del repositorio
-- **Rotación:** Cambiar claves de Azure cada 90 días (recomendado)
-
-### Acceso a Datos
-
-- **RBAC:** Role-Based Access Control en Azure
-  - Pipeline: `Storage Blob Data Contributor`
-  - Analistas: `Storage Blob Data Reader` (solo lectura)
-- **Network:** Restringir acceso a Storage Account por IP (opcional)
-
-### Datos Sensibles
-
-- **Sin PII:** No se procesan datos personales (solo artistas públicos)
-- **Encriptación:** Datos en tránsito (HTTPS) y reposo (Azure default encryption)
+- Todas las credenciales en `.env` (nunca en código)
+- `.env` en .gitignore
+- RBAC en Azure: `Storage Blob Data Contributor`
+- No hay datos personales (solo artistas públicos)
 
 ---
 
@@ -470,30 +424,3 @@ Pipeline de GitHub Actions configurado en `.github/workflows/ci.yml`
 - **Manual operativo:** [docs/RUNBOOK.md](docs/RUNBOOK.md)
 - **Guía de instalación:** [docs/SETUP.md](docs/SETUP.md)
 
----
-
-## Contribuir
-
-```bash
-# 1. Crear rama
-git checkout -b feature/nueva-funcionalidad
-
-# 2. Hacer cambios y commit
-git add .
-git commit -m "feat: agregar nueva funcionalidad"
-
-# 3. Push y crear PR
-git push origin feature/nueva-funcionalidad
-```
-
-**Convención de commits:** [Conventional Commits](https://www.conventionalcommits.org/)
-
----
-
-## Licencia
-
-Este proyecto fue desarrollado como parte del Proyecto Final del curso de Ingeniería de Datos con Python de BSG Institute.
-
----
-
-**Última actualización:** Abril 2026

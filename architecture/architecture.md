@@ -1,8 +1,8 @@
-# Arquitectura del Pipeline Spotify Analytics
+# Arquitectura del Pipeline
 
-## 1. Diseño Lógico
+> Documentación técnica del pipeline Spotify Analytics. Creada para el proyecto final BSG.
 
-### 1.1 Flujo de Datos
+## Cómo funciona el pipeline (overview)
 
 ```mermaid
 graph LR
@@ -23,7 +23,7 @@ graph LR
     style I fill:#e3f2fd
 ```
 
-### 1.2 Arquitectura Medallion
+## Arquitectura Medallion (Bronze/Silver/Gold)
 
 ```mermaid
 graph TB
@@ -73,37 +73,40 @@ graph TB
     style G3 fill:#FFD700
 ```
 
+La idea es simple: Bronze = datos crudos, Silver = limpio, Gold = listo para análisis.
+
 ---
+## Servicios de Azure que uso
 
-## 2. Mapeo a Servicios Azure
-
-| Componente | Servicio Azure | Propósito |
-|------------|----------------|-----------|
-| **Almacenamiento de entrada** | Azure Blob Storage | Almacenar CSV histórico de Spotify |
-| **API externa** | Deezer Public API | Obtener datos de artistas en tiempo real |
-| **Bronze Storage** | Azure Data Lake Gen2 | Datos raw en formato Parquet particionado |
-| **Silver Storage** | Azure Data Lake Gen2 | Datos limpios y validados |
-| **Gold Storage** | Azure Data Lake Gen2 | Datos agregados listos para análisis |
-| **Orquestación (futuro)** | Azure Data Factory | Programar ejecuciones automáticas |
-| **Analytics (futuro)** | Azure Synapse Analytics | Consultas SQL sobre Parquet |
-| **Monitoring** | Azure Monitor + Logs | Observabilidad y alertas |
+| Servicio | Para qué lo uso |
+| Azure Blob Storage | Guardar el CSV de entrada |
+| Deezer API | API pública de música (más simple que Spotify) |
+| Azure Data Lake Gen2 | Almacenar Bronze/Silver/Gold en Parquet |
+| (Futuro) Azure Data Factory | Automatizar ejecuciones |
+| (Futuro) Synapse Analytics | Hacer queries SQL sobre los datos |
 
 ---
 
-## 3. Flujo Detallado del Pipeline
+## Flujo del pipeline
 
-### 3.1 Fase de Extracción
+### Paso 1: Extracción
 
 ```python
-# 1. Descargar CSV desde Azure Blob Storage
+# 1. Bajar CSV de Azure Blob
 df_csv = dwspotify()
-# Retorna: DataFrame con columnas de Spotify Wrapped
+
+# 2. Llamar a Deezer API para más datos
+df_api = llamar_api()
+```
+
+**Nota:** Si la API falla, el pipeline sigue solo con CSV.
+
+### Paso 2: Capa Bronze
 
 # 2. Llamar a Deezer API
 df_api = llamar_api()
 # Retorna: DataFrame con top tracks de 10 artistas
 ```
-
 **Características:**
 - Timeout de 10 segundos por request
 - Manejo de errores por artista (continúa si uno falla)
@@ -143,17 +146,14 @@ datos_silver = limpiar_datos(datos_bronze)
 datos_gold = agregar_metricas(datos_silver)
 ```
 
-**Operaciones:**
-1. Agrupar por `(nombre_artista, id_artista)`
-2. Calcular:
-   - Total de canciones
-   - Popularidad promedio (redondeado a 2 decimales)
-   - Popularidad máxima
-3. Validar esquema contra `gold_schema.json`
+Agrupa por artista y calcula:
+- Total canciones
+- Popularidad promedio
+- Popularidad máxima
 
-**Particionado:** `gold/spotify/metricas_artistas.parquet` (sin partición)
+**Output:** `gold/spotify/metricas_artistas.parquet`
 
-### 3.5 Fase de Carga
+### Paso 5: Carga a Azure
 
 ```python
 guardar_bronze(datos_bronze)
@@ -161,102 +161,57 @@ guardar_silver(datos_silver)
 guardar_gold(datos_gold)
 ```
 
-**Características:**
-- Formato: Apache Parquet (compresión eficiente)
-- Overwrite: `True` (reemplaza datos existentes)
-- Cliente: Azure Data Lake Storage Gen2 SDK
+Sube todo a Azure Data Lake como Parquet (overwrite=True).
 
 ---
 
-## 4. Riesgos y Mitigaciones
+## Riesgos y cómo los manejo
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|--------------|---------|------------|
-| **API Deezer no disponible** | Media | Bajo | Pipeline continúa solo con CSV (degradación graceful) |
-| **Credenciales Azure inválidas** | Baja | Alto | Validar al inicio, retornar error claro |
-| **Cambio en esquema CSV** | Media | Alto | Validación con JSON Schema en cada capa |
-| **Duplicados en datos** | Alta | Medio | Deduplicación en capa Silver |
-| **Archivos Parquet corruptos** | Baja | Alto | Validar escritura, mantener versión anterior |
-| **Rate limiting de API** | Baja | Bajo | Timeout configurado (10s), reintentos (futuro) |
+| Qué puede fallar | Qué tan probable | Qué hago |
+|------------------|------------------|----------|
+| API Deezer caída | Medio | Pipeline sigue solo con CSV |
+| Credenciales Azure malas | Bajo | Falla rápido con error claro |
+| CSV cambió formato | Medio | Validación con JSON Schema |
+| Duplicados en datos | Alto | Deduplicación en Silver |
 
 ---
 
-## 5. Observabilidad
+## Logs y debugging
 
-### 5.1 Logs
+Uso logging de Python con 3 niveles: INFO/WARNING/ERROR
 
-**Niveles implementados:**
-- `INFO`: Progreso normal del pipeline
-- `WARNING`: API no disponible, datos faltantes
-- `ERROR`: Fallos críticos que detienen el pipeline
-
-**Ejemplo de logs:**
+Ejemplo de logs:
 ```
-2026-04-19 10:30:15 - INFO - Iniciando APi Spotify
-2026-04-19 10:30:16 - INFO - Descargando spotify_wrapped_2025.csv desde spotify-data
-2026-04-19 10:30:17 - INFO - Archivo descargado: 1543 registros
-2026-04-19 10:30:18 - INFO - Conectando a Deezer API
-2026-04-19 10:30:22 - INFO - Datos de Deezer API obtenidos: 50 registros
-2026-04-19 10:30:23 - INFO - Capa Bronze creada: 1593 registros
-2026-04-19 10:30:24 - INFO - Capa Silver creada: 1589 registros
-2026-04-19 10:30:25 - INFO - Capa Gold creada: 120 artistas únicos
+INFO - Descargando spotify_wrapped_2025.csv
+INFO - Archivo descargado: 1543 registros
+INFO - Capa Bronze creada: 1593 registros
+INFO - Capa Silver creada: 1589 registros
+INFO - Capa Gold creada: 120 artistas
 ```
 
-### 5.2 Métricas Clave
+## Decisiones técnicas importantes
 
-| Métrica | Cómo obtenerla | Umbral de alerta |
-|---------|----------------|------------------|
-| Registros Bronze | `len(datos_bronze)` | < 100 registros |
-| % de pérdida Silver/Bronze | `(1 - len(silver)/len(bronze)) * 100` | > 10% |
-| Tiempo de ejecución | Logs de inicio/fin | > 5 minutos |
-| Errores de API | Count de warnings | > 50% de requests |
+### 1. ¿Por qué Deezer y no Spotify API?
 
-### 5.3 Validaciones
+Spotify OAuth es complicado. Deezer es pública y gratis.
 
-**Por capa:**
-- **Bronze:** Columnas requeridas (`nombre_artista`, `fuente`, `ingestion_timestamp`)
-- **Silver:** + validación de tipos (int, float, datetime)
-- **Gold:** + validación de rangos (popularidad 0-100)
+### 2. ¿Por qué Parquet?
 
-**Implementación:**
-```python
-validar_datos(df, capa='bronze|silver|gold')
-# Retorna: True/False + logging de errores
-```
+Más eficiente que CSV:
+- Compresión mejor (~10x)
+- Lee más rápido
+- Guarda tipos de datos
 
----
+### 3. ¿Por qué Medallion (Bronze/Silver/Gold)?
 
-## 6. Decisiones de Diseño (ADRs)
+Es el estándar en Data Lakes:
+- Bronze = raw (puedo reprocesar si algo sale mal)
+- Silver = limpio
+- Gold = para dashboards
 
-### 6.1 ¿Por qué Deezer API en vez de Spotify API?
+### 4. Validación con JSON Schema
 
-**Contexto:** Spotify API requiere autenticación OAuth compleja.
-
-**Decisión:** Usar Deezer API pública (sin auth).
-
-**Consecuencias:**
--  Más simple de implementar
--  Sin límites de rate estrictos
--  Menos datos disponibles (sin géneros detallados)
--  Menor precisión en popularidad
-
-### 6.2 ¿Por qué Parquet en vez de CSV?
-
-**Contexto:** Necesidad de almacenar datos eficientemente en la nube.
-
-**Decisión:** Apache Parquet para todas las capas.
-
-**Consecuencias:**
--  Compresión ~10x mejor que CSV
-- Lectura columnar eficiente
-- Compatible con Synapse/Databricks
--  No legible por humanos (requiere herramientas)
-
-### 6.3 ¿Por qué Azure Data Lake Gen2?
-
-**Contexto:** Compatibilidad con entorno laboral existente.
-
-**Decisión:** ADLS Gen2 como storage principal.
+Detecta cuando el CSV cambia de formato antes de romper todo.
 
 **Consecuencias:**
 -  Integración nativa con Synapse

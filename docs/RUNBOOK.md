@@ -1,31 +1,17 @@
 # RUNBOOK - Pipeline Spotify Analytics
 
-##  Información General
 
-**Pipeline:** Spotify Analytics ETL  
-**Proveedor Cloud:** Microsoft Azure  
-**Frecuencia de ejecución:** Manual
-**Owner:** Elias Martinez
+## Cómo ejecutar el pipeline
 
----
-
-##  Ejecución Normal
-
-### Opción 1: Usar Makefile
+**El pipeline corre de forma manual, tarda ~30 segundos, y sube todo a Azure Data Lake.** 
 
 ```bash
-# Activar entorno y ejecutar
 make run
-```
 
-### Opción 2: Ejecución directa
-
-```bash
-# Desde la raíz del proyecto
 python src/main.py
 ```
 
-### Salida Esperada
+### Qué esperar
 
 ```
 2026-04-19 10:30:15 - INFO - Iniciando APi Spotify
@@ -51,88 +37,28 @@ python src/main.py
 2026-04-19 10:30:39 - INFO - Pipeline ejecutado correctamente
 ```
 
-**Exit code:** `0` (éxito) o `1` (error)
+Si todo salió bien, exit code = 0.
 
 ---
 
-##  Re-ejecución del Pipeline
+## Re-ejecutar el pipeline
 
-### Escenario 1: Ejecución completa desde cero
+Para volver a correr el pipeline, simplemente `make run` otra vez. Los archivos del mismo día se sobrescriben (overwrite=True), pero fechas anteriores no se tocan por el particionado.
 
-```bash
-# Los datos se sobrescriben automáticamente (overwrite=True)
-make run
-```
-
-**Impacto:**
-- Los archivos Parquet del día actual se reemplazan
-- No afecta datos de fechas anteriores (particionado)
-
-### Escenario 2: Solo probar sin escribir a Azure
-
-```bash
-# Comentar temporalmente las funciones de carga en main.py
-# O crear variable de entorno DRY_RUN=true (requiere modificación del código)
-```
+**Nota:** Si solo quieres probar sin escribir a Azure, comenta las funciones `guardar_*()` en main.py temporalmente.
 
 ---
 
-##  Backfill (Carga Histórica)
+### Error: "Error al descargar CSV"
 
-### ¿Qué es un backfill?
-
-Re-procesar datos de fechas pasadas para llenar huecos o corregir errores.
-
-### Cómo hacer backfill manual
-
-**1. Modificar timestamp en transform.py:**
-
-```python
-# En crear_bronze()
-# Cambiar:
-datos_completos['ingestion_timestamp'] = datetime.now()
-
-# Por:
-from datetime import datetime, timedelta
-fecha_backfill = datetime.now() - timedelta(days=7)  # 7 días atrás
-datos_completos['ingestion_timestamp'] = fecha_backfill
-```
-
-**2. Ejecutar pipeline:**
-
-```bash
-make run
-```
-
-**3. Revertir cambios:**
-
-Volver a poner `datetime.now()` para ejecuciones futuras.
-
-### Backfill automatizado (futuro)
-
-```bash
-# Pasar fecha como argumento
-python src/main.py --backfill-date 2026-04-10
-```
-
----
-
-##  Troubleshooting - Qué Revisar Si Falla
-
-### Error 1: "Error al descargar CSV"
-
-**Mensaje:**
 ```
 ERROR - Error en dwspotify: No se pudo conectar a Azure
 ERROR - Error al descargar CSV
 ```
 
-**Causas probables:**
-1. Credenciales de Azure Blob incorrectas
-2. Contenedor o blob no existe
-3. Sin conexión a internet
+**Causas:** Credenciales mal en .env, contenedor no existe, o sin internet.
 
-**Solución:**
+**Cómo arreglarlo:**
 
 ```bash
 # 1. Verificar variables de entorno
@@ -159,9 +85,7 @@ print('Contenedores:', [c.name for c in containers])
 "
 ```
 
----
-
-### Error 2: "API no disponible"
+### Error: "API no disponible"
 
 **Mensaje:**
 ```
@@ -169,39 +93,23 @@ WARNING - API no disponible
 INFO - Continuando solo con CSV
 ```
 
-**Impacto:** Pipeline continúa (degradación graceful), pero solo procesa datos del CSV.
+**Alerta:** El pipeline sigue corriendo (solo usa el CSV). Si necesitas los datos de API sí o sí, espera 5-10 min y vuelve a intentar.
 
-**Causas probables:**
-1. Deezer API caída temporalmente
-2. Timeout de red (>10 segundos)
-3. Rate limiting
-
-**Solución:**
-- Si es aceptable: Ignorar (pipeline funciona solo con CSV)
-- Si se requiere API: Esperar 5-10 minutos y re-ejecutar
-
-**Verificar manualmente:**
+Para verificar si Deezer está caído:
 ```bash
 curl https://api.deezer.com/artist/75491
 # Debe retornar JSON con info de Eminem
 ```
 
----
-
-### Error 3: "Validación Bronze/Silver/Gold falló"
-
-**Mensaje:**
+### Error: "Validación Bronze/Silver/Gold falló"
 ```
 ERROR - Validación Bronze falló
 ERROR - Pipeline falló
 ```
 
-**Causas probables:**
-1. Esquema del CSV cambió (nuevas columnas, columnas faltantes)
-2. Tipos de datos incorrectos
-3. Valores nulos en campos obligatorios
+Esto pasa cuando el esquema del CSV cambió o hay datos malos.
 
-**Solución:**
+**Qué hacer:**
 
 ```bash
 # 1. Ver qué falló exactamente (revisar logs anteriores)
@@ -213,13 +121,11 @@ print(datos_bronze.columns)
 print(datos_bronze.dtypes)
 print(datos_bronze.head())
 
-# 3. Actualizar schema JSON si el CSV cambió legítimamente
-# Editar: data_contracts/schemas/bronze_schema.json
+# 3. Si el CSV cambió de verdad, actualiza el schema JSON
+nano data_contracts/schemas/bronze_schema.json
 ```
 
----
-
-### Error 4: "Error al guardar Bronze/Silver/Gold"
+### Error: "Error al guardar a Azure"
 
 **Mensaje:**
 ```
@@ -227,13 +133,9 @@ ERROR - Error en guardar_bronze: [mensaje específico]
 ERROR - Error al guardar Bronze
 ```
 
-**Causas probables:**
-1. Credenciales de ADLS incorrectas
-2. Container no existe
-3. Permisos insuficientes
-4. Quota de storage excedida
+**Causas comunes:** Credenciales ADLS mal, container no existe, o permisos.
 
-**Solución:**
+**Fix:**
 
 ```bash
 # 1. Verificar credenciales ADLS
@@ -251,192 +153,42 @@ client = conectar_adls()
 print('Conectado:', client is not None)
 "
 
-# 4. Verificar permisos del container
-# Ir a Azure Portal → Storage Account → Access Control (IAM)
-# Debe tener rol: Storage Blob Data Contributor
+# 4. Revisar permisos en Azure Portal
+# Storage Account → IAM → debe tener rol "Storage Blob Data Contributor"
 ```
 
 ---
 
-### Error 5: Pipeline se cuelga (no responde)
+## Logs
 
-**Síntoma:** El comando `make run` no termina después de varios minutos.
-
-**Causas probables:**
-1. API Deezer muy lenta (timeout no configurado correctamente)
-2. CSV muy grande (>100MB)
-3. Problema de red intermitente
-
-**Solución:**
+Los logs salen directo en consola cuando ejecutas `make run`. Si quieres guardarlos:
 
 ```bash
-# 1. Cancelar con Ctrl+C
-
-# 2. Verificar timeout de API en extract.py
-# Debe tener: timeout=10 en requests.get()
-
-# 3. Verificar tamaño del CSV
-ls -lh [ruta-al-csv-local-si-está-descargado]
-
-# 4. Ejecutar con más logging
-python src/main.py 2>&1 | tee pipeline.log
-```
-
----
-
-##  Logs - Dónde Mirar
-
-### Logs en tiempo real
-
-```bash
-# Ejecutar con salida en consola
-make run
-
-# Guardar logs en archivo
 make run 2>&1 | tee logs/$(date +%Y-%m-%d).log
 ```
 
-### Logs en Azure (futuro)
-
-**Azure Monitor:**
-1. Portal Azure → Monitor → Logs
-2. Query:
-```kql
-AzureDiagnostics
-| where ResourceType == "DATALAKESTORE"
-| where TimeGenerated > ago(1h)
-| order by TimeGenerated desc
-```
-
-### Niveles de log importantes
-
-| Nivel | Qué significa | Acción requerida |
-|-------|---------------|------------------|
-| `INFO` | Operación normal | Ninguna |
-| `WARNING` | Degradación (ej: API caída) | Revisar si es aceptable |
-| `ERROR` | Fallo crítico | Investigar inmediatamente |
+**INFO** = todo bien | **WARNING** = algo raro pero sigue | **ERROR** = se rompió
 
 ---
 
-##  Validación Post-Ejecución
+## Verificar que todo se subió bien
 
-### 1. Verificar que los archivos se crearon en Azure
+Después de ejecutar, revisa en Azure Portal que los archivos estén ahí:
+- `bronze/spotify/ingestion_date=YYYY-MM-DD/datos.parquet`
+- `silver/spotify/event_date=YYYY-MM-DD/datos.parquet`
+- `gold/spotify/metricas_artistas.parquet`
 
-**Portal Azure:**
-1. Ir a Storage Account → Containers → [tu-contenedor]
-2. Buscar rutas:
-   - `bronze/spotify/ingestion_date=2026-04-19/datos.parquet`
-   - `silver/spotify/event_date=2026-04-19/datos.parquet`
-   - `gold/spotify/metricas_artistas.parquet`
-
-**Azure CLI:**
+O por CLI:
 ```bash
-az storage fs file list \
-  --account-name <tu-cuenta> \
-  --file-system <tu-contenedor> \
-  --path "bronze/spotify/" \
-  --auth-mode key
+az storage fs file list --account-name <cuenta> --file-system <contenedor> --path "bronze/spotify/"
 ```
 
-### 2. Verificar tamaño de archivos
-
-```bash
-# Los archivos Parquet deberían ser:
-# Bronze: ~50-500KB (depende de registros)
-# Silver: ~40-450KB (ligeramente menor)
-# Gold: ~5-50KB (mucho menor por agregación)
-```
-
-### 3. Leer datos desde Azure (validación)
-
-```python
-# Script de validación
-import pandas as pd
-from azure.storage.filedatalake import DataLakeServiceClient
-
-service_client = DataLakeServiceClient(
-    account_url="https://<cuenta>.dfs.core.windows.net",
-    credential="<clave>"
-)
-
-# Leer Gold
-file_client = service_client.get_file_system_client("<container>") \
-    .get_file_client("gold/spotify/metricas_artistas.parquet")
-
-with open("temp_gold.parquet", "wb") as f:
-    data = file_client.download_file()
-    f.write(data.readall())
-
-df = pd.read_parquet("temp_gold.parquet")
-print(df.head())
-print(f"Total artistas: {len(df)}")
-```
+Los Parquet deberían pesar: Bronze ~50-500KB, Silver similar, Gold ~5-50KB.
 
 ---
 
-##  Alertas Recomendadas (futuro)
+## Notas adicionales
 
-| Condición | Severidad | Acción |
-|-----------|-----------|--------|
-| Pipeline falla 2 veces consecutivas | Alta | Email + Slack |
-| Tiempo de ejecución > 10 minutos | Media | Email |
-| Bronze < 100 registros | Media | Investigar fuente |
-| % pérdida Silver/Bronze > 15% | Alta | Revisar validaciones |
-| Gold = 0 artistas | Crítica | Detener siguiente ejecución |
-
----
-##  Rollback (Revertir Ejecución)
-
-Si una ejecución generó datos incorrectos:
-
-### 1. Borrar archivos del día actual
-
-**Azure Portal:**
-1. Storage Account → Containers → [contenedor]
-2. Navegar a `bronze/spotify/ingestion_date=2026-04-19/`
-3. Delete folder
-
-**Azure CLI:**
-```bash
-az storage fs directory delete \
-  --account-name <cuenta> \
-  --file-system <contenedor> \
-  --name "bronze/spotify/ingestion_date=2026-04-19" \
-  --yes
-```
-
-### 2. Re-ejecutar pipeline
-
-```bash
-make run
-```
-
----
-
-##  Monitoreo de Métricas
-
-### KPIs del Pipeline
-
-```bash
-# Extraer de logs después de ejecución
-grep "Bronze:" pipeline.log  # Registros Bronze
-grep "Silver:" pipeline.log  # Registros Silver  
-grep "Gold:" pipeline.log    # Artistas Gold
-
-# Calcular pérdida de datos
-python -c "
-bronze = 1593
-silver = 1589
-loss = ((bronze - silver) / bronze) * 100
-print(f'Pérdida: {loss:.2f}%')
-"
-```
-
-### Histórico de Ejecuciones
-
-```bash
-# Crear CSV con historial (agregar a cada ejecución)
-echo "$(date '+%Y-%m-%d %H:%M:%S'),1593,1589,120,SUCCESS" >> logs/history.csv
-
-# Columnas: fecha,bronze,silver,gold,status
-```
+- Si necesitas borrar una ejecución mala, ve a Azure Portal y borra la carpeta con la fecha del día
+- Para hacer backfill (reprocesar fechas pasadas), todavía no está automatizado - hay que cambiar el timestamp manualmente en transform.py
+- La pérdida de datos normal entre Bronze y Silver es <5% (se eliminan duplicados)

@@ -12,69 +12,69 @@ logging.basicConfig(
 def main():
     logging.info("Iniciando APi Spotify")
     
-    logging.info("--- PASO 1: EXTRACCIÓN ---")
+    logging.info("EXTRACCIÓN")
     
     df_spotify = dwspotify()
     if df_spotify is None:
-        logging.error("Error al descargar CSV")
+        print("Error al descargar CSV")
         return False
     
     spotify_api = llamar_api()
     if spotify_api is None:
-        logging.warning(' API no disponible')
-        logging.info(' Continuando solo con CSV')
+        print(' API no disponible')
+        print(' Continuando solo con CSV')
         spotify_api = None
     
-    logging.info("--- PASO 2: TRANSFORMACIÓN BRONZE ---")
+    logging.info("TRANSFORMACIÓN BRONZE")
     datos_bronze = crear_bronze(df_spotify, spotify_api)
     if datos_bronze is None:
-        logging.error("Error al crear Bronze")
+        print("Error al crear Bronze")
         return False
     
     if not validar_datos(datos_bronze, 'bronze'):
-        logging.error("Validación Bronze falló")
+        print("Validación Bronze falló")
         return False
     
-    logging.info("--- PASO 3: TRANSFORMACIÓN SILVER ---")
+    logging.info("TRANSFORMACIÓN SILVER")
     datos_silver = limpiar_datos(datos_bronze)
     if datos_silver is None:
-        logging.error('Error al crear Silver')
+        print('Error al crear Silver')
         return False
     
     if not validar_datos(datos_silver, "silver"):
-        logging.error("Validación Silver falló")
+        print("Validación Silver falló")
         return False
     
-    logging.info("--- PASO 4: TRANSFORMACIÓN GOLD ---")
+    logging.info("TRANSFORMACIÓN GOLD")
     datos_gold = agregar_metricas(datos_silver)
     if datos_gold is None:
-        logging.error("Error al crear Gold")
+        print("Error al crear Gold")
         return False
     
     if not validar_datos(datos_gold, 'gold'):
-        logging.error('Validación Gold falló')
+        print('Validación Gold falló')
         return False
     
-    logging.info("--- PASO 5: CARGA A AZURE ---")
+    logging.info("CARGA A AZURE")
     
     if not guardar_bronze(datos_bronze):
-        logging.error("Error al guardar Bronze")
+        print("Error al guardar Bronze")
         return False
 
     if not guardar_silver(datos_silver):
-        logging.error("Error al guardar Silver")
+        print("Error al guardar Silver")
         return False
     
     if not guardar_gold(datos_gold):
-        logging.error("Error al guardar Gold")
+        print("Error al guardar Gold")
         return False
     
-    logging.info("=== PIPELINE COMPLETADO EXITOSAMENTE ===")
+    print("Proceso completo")
     
     # Resumen de registros procesados
-    logging.info(f"Bronze: {len(datos_bronze)} registros")
-    logging.info(f"Silver: {len(datos_silver)} registros")
-    logging.info(f"Gold: {len(datos_gold)} artistas")
+    print(f"Bronze: {len(datos_bronze)} registros")
+    print(f"Silver: {len(datos_silver)} registros")
+    print(f"Gold: {len(datos_gold)} artistas")
     
     return True
 
@@ -82,8 +82,8 @@ def main():
 if __name__ == "__main__":
     resultado = main()
     if not resultado:
-        logging.error("Pipeline falló")
+        print("Pipeline falló")
         exit(1)
     else:
-        logging.info("Pipeline ejecutado correctamente")
+        print("Pipeline ejecutado correctamente")
         exit(0)
