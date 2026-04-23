@@ -34,3 +34,7 @@ logs/
 # temporal
 # *.csv
 # *.parquet
+# Ignorar videos
+*.mp4
+*.mov
+*.mkv

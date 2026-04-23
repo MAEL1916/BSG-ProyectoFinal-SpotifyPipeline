@@ -8,11 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configuramos logging de forma sencilla
-print(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 # Silenciamos todos los logs técnicos y aburridos de la conexión con Azure
-print("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
 
 def verificar_ingesta():
     try:

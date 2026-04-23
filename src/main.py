@@ -10,9 +10,6 @@ logging.basicConfig(
 )
 
 def main():
-    logging.info("Iniciando APi Spotify")
-    
-    logging.info("EXTRACCIÓN")
     
     df_spotify = dwspotify()
     if df_spotify is None:
