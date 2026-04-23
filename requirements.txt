@@ -1,6 +1,6 @@
 # Core
-pandas==2.2.0
-numpy==1.26.2
+pandas>=2.2.0
+numpy>=1.26.2
 python-dotenv==1.0.0
 
 # Azure
@@ -12,11 +12,11 @@ azure-identity==1.15.0
 spotipy==2.23.0
 
 # Data formats
-pyarrow==15.0.0
+pyarrow>=15.0.0
 
 # Logging
 colorlog==6.8.0
 
 # Testing
-pytest==7.4.3
-pytest-cov==4.1.0
+pytest>=7.4.3
+pytest-cov>=4.1.0

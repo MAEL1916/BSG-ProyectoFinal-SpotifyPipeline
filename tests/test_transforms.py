@@ -6,10 +6,6 @@ sys.path.insert(0, 'src')
 from pipeline.transform import crear_bronze, limpiar_datos, agregar_metricas
 
 def test_crear_bronze():
-    """
-    Prueba que la función crear_bronze() junte correctamente
-    los datos del CSV y los datos de la API.
-    """
     # Datos de prueba del CSV (solo nombre)
     df_csv = pd.DataFrame({'nombre_artista': ['Test']})
     
@@ -31,11 +27,6 @@ def test_crear_bronze():
 
 
 def test_limpiar_datos():
-    """
-    Prueba que la función limpiar_datos() elimine:
-    - Registros sin nombre_artista (None)
-    - Duplicados (mismo id_artista + cancion)
-    """
     # Datos de prueba con problemas:
     # - Fila 1 y 2 son duplicadas (mismo id_artista y cancion)
     # - Fila 3 tiene nombre_artista = None

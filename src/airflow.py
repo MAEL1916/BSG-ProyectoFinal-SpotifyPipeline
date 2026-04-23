@@ -3,15 +3,27 @@ from datetime import datetime
 import pandas as pd
 from azure.storage.filedatalake import DataLakeServiceClient
 import os
+from io import BytesIO
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Configuramos logging de forma sencilla
+print(level=logging.INFO, format='%(message)s')
+
+# Silenciamos todos los logs técnicos y aburridos de la conexión con Azure
+print("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+
 def verificar_ingesta():
-    """Verifica que los datos se hayan cargado correctamente en ADLS"""
     try:
-        account_name = os.getenv('AZURE_STORAGE_ACCOUNT_NAME')
-        account_key = os.getenv('AZURE_STORAGE_ACCOUNT_KEY')
+        account_name = os.getenv('ADLS_ACCOUNT_NAME')
+        account_key = os.getenv('ADLS_ACCOUNT_KEY')
+        
+        # Si tienes tus credenciales de otra forma en el .env, asegúrate de que sean las correctas
+        if not account_name:
+            print("No encontré ADLS_ACCOUNT_NAME. Revisa tu archivo .env.")
+            return None
+
         container_name = 'medallion'
         
         service_client = DataLakeServiceClient(
@@ -21,48 +33,51 @@ def verificar_ingesta():
         
         file_system_client = service_client.get_file_system_client(container_name)
         
-        # Verificar Bronze
-        bronze_path = f"bronze/spotify/ingestion_date={datetime.now().strftime('%Y-%m-%d')}/datos.parquet"
+        hoy = datetime.now().strftime('%Y-%m-%d')
+        
+        # Rutas
+        bronze_path = f"bronze/spotify/ingestion_date={hoy}/datos.parquet"
+        silver_path = f"silver/spotify/event_date={hoy}/datos.parquet"
+        gold_path = "gold/spotify/metricas_artistas.parquet"
+        
+        # --- BRONZE ---
         bronze_client = file_system_client.get_file_client(bronze_path)
         bronze_props = bronze_client.get_file_properties()
+        print(f"   ↳ Tamaño: {bronze_props.size / 1024:.2f} KB")
         
-        # Verificar Silver
-        silver_path = f"silver/spotify/event_date={datetime.now().strftime('%Y-%m-%d')}/datos.parquet"
+        # Descargar Bronze con Pandas
+        b_data = bronze_client.download_file().readall()
+        df_bronze = pd.read_parquet(BytesIO(b_data))
+        print(f"   ↳ Registros totales: {len(df_bronze)}")
+        print(f"   ↳ Por fuente:\n{df_bronze['fuente'].value_counts().to_string()}")
+
+        # --- SILVER ---
         silver_client = file_system_client.get_file_client(silver_path)
         silver_props = silver_client.get_file_properties()
+        print(f"   ↳ Tamaño: {silver_props.size / 1024:.2f} KB")
         
-        # Verificar Gold
-        gold_path = "gold/spotify/metricas_artistas.parquet"
+        s_data = silver_client.download_file().readall()
+        df_silver = pd.read_parquet(BytesIO(s_data))
+        print(f"   ↳ Registros limpios: {len(df_silver)}")
+
+        # --- GOLD ---
         gold_client = file_system_client.get_file_client(gold_path)
         gold_props = gold_client.get_file_properties()
+        print(f"   ↳ Tamaño: {gold_props.size / 1024:.2f} KB")
         
-        # Crear reporte
-        reporte = {
-            'timestamp_verificacion': datetime.now(),
-            'bronze': {
-                'path': bronze_path,
-                'size_bytes': bronze_props.size,
-                'last_modified': bronze_props.last_modified
-            },
-            'silver': {
-                'path': silver_path,
-                'size_bytes': silver_props.size,
-                'last_modified': silver_props.last_modified
-            },
-            'gold': {
-                'path': gold_path,
-                'size_bytes': gold_props.size,
-                'last_modified': gold_props.last_modified
-            }
-        }
+        g_data = gold_client.download_file().readall()
+        df_gold = pd.read_parquet(BytesIO(g_data))
+        print(f"   ↳ Artistas agregados: {len(df_gold)}")
+
+        print("\n muestra informacion cargada")
+        muestra = df_gold[['nombre_artista', 'total_canciones', 'popularidad_maxima']].head(5)
+        print(muestra.to_markdown())
         
-        logging.info("=== REPORTE DE INGESTA ===")
-        logging.info(f" BRONZE: {bronze_props.size} bytes - {bronze_path}")
-        logging.info(f" SILVER: {silver_props.size} bytes - {silver_path}")
-        logging.info(f" GOLD: {gold_props.size} bytes - {gold_path}")
-        
-        return reporte
+        return True
         
     except Exception as e:
-        logging.error(f"Error verificando ingesta: {str(e)}")
+        print(f"\n Error verificando ingesta en Azure: {str(e)}")
         return None
+
+if __name__ == "__main__":
+    verificar_ingesta()

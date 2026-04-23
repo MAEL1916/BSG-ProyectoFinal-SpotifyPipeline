@@ -4,6 +4,50 @@
 
 ## Cómo funciona el pipeline (overview)
 
+### Descripción general del flujo
+
+El pipeline integra dos fuentes de datos heterogéneas (un archivo histórico en CSV y una API REST en tiempo real) para construir un dataset analítico confiable usando la arquitectura Medallion (Bronze/Silver/Gold). El objetivo es mantener trazabilidad (raw), mejorar calidad (curated) y entregar métricas listas para consumo (serving).
+
+**Entradas (Data Sources):**
+- **Azure Blob Storage (CSV):** dataset base con información histórica de artistas/canciones (fuente batch).
+- **Deezer API (JSON):** enriquecimiento "near real-time" con popularidad/rank y fan count (fuente API).
+
+**Ejecución del pipeline (Pipeline Execution):**
+
+1. **Extract:** descarga el CSV desde Blob y consulta la API de Deezer. Ambos resultados se convierten a DataFrames.
+
+2. **Bronze Layer (Raw Data):** se combinan ambas fuentes sin alterar el contenido original, agregando metadatos de ingesta:
+   - `fuente` (CSV/API)
+   - `ingestion_timestamp`
+   - Salida en Parquet para eficiencia de almacenamiento y lectura.
+
+3. **Transform (Clean + Validate):** aplicación de reglas de calidad antes de exponer datos:
+   - Eliminación de nulos en campos críticos
+   - Deduplicación por claves lógicas (ej. artista + canción)
+   - Validación de estructura con JSON Schema (data contracts).
+
+4. **Silver Layer (Curated Data):** dataset limpio y consistente, listo para ser agregado o consultado.
+
+5. **Transform (Aggregate):** cálculo de métricas por artista:
+   - Total de canciones
+   - Popularidad promedio
+   - Popularidad máxima
+
+6. **Gold Layer (Analytics Ready):** dataset agregado y optimizado para BI/analytics.
+
+**Salida (Azure Data Lake – Parquet):**
+- Bronze particionado por `ingestion_date=YYYY-MM-DD`
+- Silver particionado por `event_date=YYYY-MM-DD`
+- Gold como tabla/archivo final de métricas
+
+**Propiedades de diseño:**
+- **Trazabilidad:** Bronze conserva el dato "tal cual llegó"
+- **Calidad y consistencia:** Silver aplica limpieza + contratos de datos
+- **Consumo analítico:** Gold entrega métricas listas para dashboards/consultas
+- **Eficiencia:** Parquet reduce tamaño y acelera lecturas
+
+### Diagrama de flujo
+
 ```mermaid
 graph LR
     A[Azure Blob Storage<br/>CSV] --> B[Extract]
@@ -281,3 +325,13 @@ graph TB
     style SILVER fill:#2196F3
     style GOLD fill:#FFD700
 ```
+
+---
+
+## Resumen de capas
+
+| Capa | Propósito | Características |
+|------|-----------|-----------------|
+| **Bronze** | Raw + metadatos | Datos sin modificar, trazabilidad completa |
+| **Silver** | Limpio + validado | Sin duplicados, sin nulos, con contratos de datos |
+| **Gold** | Agregado + analytics ready | Métricas calculadas, listo para dashboards |
