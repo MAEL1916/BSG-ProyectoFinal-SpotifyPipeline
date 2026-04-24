@@ -65,8 +65,6 @@ A continuación, se muestran las diferentes perspectivas de los datos consultado
 <img src="../Synapse_Imagenes/SQL_script_1-4.png" width="800" />
 <br>
 
----
-
 # 2. Análisis del Top 50 y Tendencias
 
 Adicional al cruce de plataformas, consultamos la capa general consolidada para visualizar relaciones como la popularidad versus la cantidad de canciones analizadas o el recuento general de géneros.
@@ -95,10 +93,7 @@ Adicional al cruce de plataformas, consultamos la capa general consolidada para 
 <img src="../Synapse_Imagenes/SQL_script_1-10.png" width="800" />
 <br>
 
----
-
-##  Conclusión Analítica
-
+##  Conclusión
 A través de **Azure Synapse**, confirmamos que la arquitectura Medallion diseñada cumple su propósito:
 * Los datos en la **Capa Gold** están pre-calculados (agregaciones funcionales).
 * El cruce entre el CSV histórico y la API dinámica enriquece el modelo.
