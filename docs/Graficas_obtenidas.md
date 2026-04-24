@@ -4,12 +4,11 @@ Este documento presenta los resultados visuales extraídos directamente desde nu
 
 Para generar estos gráficos, utilizamos el motor **Serverless SQL Pool** de **Azure Synapse Analytics**, lo que nos permitió consultar los datos estructurados y cruzarlos (JOINs) mediante SQL estándar sin necesidad de provisionar infraestructura dedicada.
 
----
-
 ##  1. Comparativa de la data
 
 En esta fase, construimos un query analítico para enfrentar las métricas de los artistas extraídos del Dataset crudo (CSV) contra las métricas frescas obtenidas consultando la API pública de Deezer.
 
+```sql
 WITH MetricasSpotify AS (
     SELECT 
         artist_name as Artista,
