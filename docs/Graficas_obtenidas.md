@@ -49,13 +49,21 @@ A continuación, se muestran las diferentes perspectivas de los datos consultado
 
 *(Imágenes extraídas de la ejecución en Azure Synapse)*
 
-![Comparativa 1](../Synapse%20Imagenes/SQL%20script%201.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1.png" width="800" />
+<br>
 
-![Comparativa 2](../Synapse%20Imagenes/SQL%20script%201-2.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-2.png" width="800" />
+<br>
 
-![Comparativa 3](../Synapse%20Imagenes/SQL%20script%201-3.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-3.png" width="800" />
+<br>
 
-![Comparativa 4](../Synapse%20Imagenes/SQL%20script%201-4.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-4.png" width="800" />
+<br>
 
 ---
 
@@ -63,17 +71,29 @@ A continuación, se muestran las diferentes perspectivas de los datos consultado
 
 Adicional al cruce de plataformas, consultamos la capa general consolidada para visualizar relaciones como la popularidad versus la cantidad de canciones analizadas o el recuento general de géneros.
 
-![Comparativa 5](../Synapse%20Imagenes/SQL%20script%201-5.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-5.png" width="800" />
+<br>
 
-![Comparativa 6](../Synapse%20Imagenes/SQL%20script%201-6.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-6.png" width="800" />
+<br>
 
-![Comparativa 7](../Synapse%20Imagenes/SQL%20script%201-7.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-7.png" width="800" />
+<br>
 
-![Comparativa 8](../Synapse%20Imagenes/SQL%20script%201-8.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-8.png" width="800" />
+<br>
 
-![Comparativa 9](../Synapse%20Imagenes/SQL%20script%201-9.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-9.png" width="800" />
+<br>
 
-![Comparativa 10](../Synapse%20Imagenes/SQL%20script%201-10.png)
+<br>
+<img src="../Synapse_Imagenes/SQL_script_1-10.png" width="800" />
+<br>
 
 ---
 
